@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ErgoX — Gestão Ergonômica</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-inner">
+    <div class="logo-group">
+      <img src="assets/logo.png" alt="ErgoX" class="logo-img" onerror="this.style.display='none'">
+      <span class="logo-fallback">ERGO<span>X</span></span>
+    </div>
+    <div class="header-right">
+      <span class="last-update" id="lastUpdate"></span>
+      <button class="btn-refresh" id="btnRefresh" onclick="App.refresh()">
+        <span class="refresh-icon">↻</span> Atualizar
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== NAV ===== -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="aet">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+    Análise Ergonômica
+  </button>
+  <button class="tab-btn" data-tab="pa">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Planos de Ação
+  </button>
+  <button class="tab-btn" data-tab="lancamentos">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Lançamentos
+  </button>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+  <!-- ==================== AET TAB ==================== -->
+  <section class="tab-content active" id="tab-aet">
+
+    <div class="filter-bar">
+      <select id="aet-filter-setor" onchange="AET.onFilter()"><option value="">Todos os Setores</option></select>
+      <select id="aet-filter-criticidade" onchange="AET.onFilter()">
+        <option value="">Todas as Criticidades</option>
+        <option>ALTO</option><option>MODERADO</option><option>BAIXO</option>
+        <option>AUSÊNCIA DE RISCO</option><option>EXTINTO</option>
+      </select>
+      <select id="aet-filter-genero" onchange="AET.onFilter()">
+        <option value="">Todos os Gêneros</option>
+        <option>Masculino</option><option>Feminino</option><option>Unissex</option><option>?</option>
+      </select>
+      <select id="aet-filter-gerente" onchange="AET.onFilter()"><option value="">Todos os Gerentes</option></select>
+      <button class="btn-clear-filter" onclick="AET.clearFilters()">✕ Limpar</button>
+    </div>
+
+    <div class="cards-grid" id="aet-cards">
+      <div class="card card-primary">
+        <div class="card-value" id="aet-total">—</div>
+        <div class="card-label">Total de Postos</div>
+      </div>
+      <div class="card card-danger">
+        <div class="card-value" id="aet-alto">—</div>
+        <div class="card-label">Alto Risco</div>
+      </div>
+      <div class="card card-warning">
+        <div class="card-value" id="aet-moderado">—</div>
+        <div class="card-label">Moderado</div>
+      </div>
+      <div class="card card-success">
+        <div class="card-value" id="aet-baixo">—</div>
+        <div class="card-label">Baixo Risco</div>
+      </div>
+      <div class="card card-info">
+        <div class="card-value" id="aet-ausencia">—</div>
+        <div class="card-label">Ausência de Risco</div>
+      </div>
+      <div class="card card-muted">
+        <div class="card-value" id="aet-extinto">—</div>
+        <div class="card-label">Extinto/Desativado</div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3 class="chart-title">Distribuição por Gênero</h3>
+        <div class="chart-container chart-donut">
+          <canvas id="aet-chart-genero"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3 class="chart-title">Criticidade por Setor (Top 10)</h3>
+        <div class="chart-container">
+          <canvas id="aet-chart-crit"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <h3>Postos de Trabalho</h3>
+        <input type="text" class="search-input" id="aet-search" placeholder="Buscar posto, setor…" oninput="AET.search(this.value)">
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nº</th><th>Setor</th><th>Posto de Trabalho</th>
+              <th>Criticidade</th><th>Gênero</th><th>Gerente</th>
+              <th>Atualização</th><th style="min-width:100px">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="aet-tbody">
+            <tr><td colspan="8" class="table-loading">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer"><span id="aet-count">—</span></div>
+    </div>
+  </section>
+
+  <!-- ==================== PA TAB ==================== -->
+  <section class="tab-content" id="tab-pa">
+
+    <div class="filter-bar">
+      <select id="pa-filter-setor" onchange="PA.onFilter()"><option value="">Todos os Setores</option></select>
+      <select id="pa-filter-criticidade" onchange="PA.onFilter()">
+        <option value="">Todas as Criticidades</option>
+        <option>ALTO</option><option>MODERADO</option><option>BAIXO</option>
+      </select>
+      <select id="pa-filter-status" onchange="PA.onFilter()">
+        <option value="">Todos os Status</option>
+        <option>CONCLUÍDO</option><option>ATRASADO</option><option>EM ANDAMENTO</option>
+      </select>
+      <select id="pa-filter-gerente" onchange="PA.onFilter()"><option value="">Todos os Gerentes</option></select>
+      <button class="btn-clear-filter" onclick="PA.clearFilters()">✕ Limpar</button>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card card-primary">
+        <div class="card-value" id="pa-total">—</div>
+        <div class="card-label">Total de Ações</div>
+      </div>
+      <div class="card card-success">
+        <div class="card-value" id="pa-concluido">—</div>
+        <div class="card-label">Concluídas</div>
+      </div>
+      <div class="card card-danger">
+        <div class="card-value" id="pa-atrasado">—</div>
+        <div class="card-label">Atrasadas</div>
+      </div>
+      <div class="card card-warning">
+        <div class="card-value" id="pa-andamento">—</div>
+        <div class="card-label">Em Andamento</div>
+      </div>
+      <div class="card card-teal">
+        <div class="card-value" id="pa-pct">—</div>
+        <div class="card-label">% Concluído</div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3 class="chart-title">Status das Ações</h3>
+        <div class="chart-container chart-donut">
+          <canvas id="pa-chart-status"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3 class="chart-title">Ações por Criticidade</h3>
+        <div class="chart-container">
+          <canvas id="pa-chart-crit"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <h3>Ações de Controle</h3>
+        <input type="text" class="search-input" id="pa-search" placeholder="Buscar ação, setor, responsável…" oninput="PA.search(this.value)">
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Setor</th><th>Posto</th><th>Criticidade</th>
+              <th>Ação de Controle</th><th>Responsável</th>
+              <th>Data Prevista</th><th>Status</th><th style="min-width:100px">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="pa-tbody">
+            <tr><td colspan="8" class="table-loading">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer"><span id="pa-count">—</span></div>
+    </div>
+  </section>
+
+  <!-- ==================== LANÇAMENTOS TAB ==================== -->
+  <section class="tab-content" id="tab-lancamentos">
+
+    <div class="lanc-nav">
+      <button class="lanc-tab active" data-form="form-aet-new">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Novo Posto (AET)
+      </button>
+      <button class="lanc-tab" data-form="form-pa-new">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Nova Ação (PA)
+      </button>
+    </div>
+
+    <!-- FORM: Novo Posto AET -->
+    <div class="form-card active" id="form-aet-new">
+      <div class="form-card-title">
+        <h3>Lançamento — Posto de Trabalho (AET)</h3>
+        <p class="form-subtitle">Preencha os dados do novo posto. Campos marcados com * são obrigatórios.</p>
+      </div>
+      <form onsubmit="Forms.submitAET(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Setor *</label>
+            <input type="text" name="SETOR" required list="dl-setor" autocomplete="off">
+            <datalist id="dl-setor"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Posto de Trabalho *</label>
+            <input type="text" name="POSTO_TRABALHO" required>
+          </div>
+          <div class="form-group">
+            <label>Criticidade Atual *</label>
+            <select name="CRITICIDADE_ATUAL" required>
+              <option value="">Selecione…</option>
+              <option>ALTO</option><option>MODERADO</option><option>BAIXO</option>
+              <option>AUSÊNCIA DE RISCO</option><option>EXTINTO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Gênero do Posto</label>
+            <select name="POSTO_GENERO">
+              <option value="">Selecione…</option>
+              <option>Masculino</option><option>Feminino</option><option>Unissex</option><option>?</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Gerente</label>
+            <input type="text" name="GERENTE" list="dl-gerente" autocomplete="off">
+            <datalist id="dl-gerente"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Atualização</label>
+            <input type="text" name="ATUALIZACAO" placeholder="Ex: Unissex, Masculino…">
+          </div>
+          <div class="form-group">
+            <label>Criticidade 2024</label>
+            <select name="CRITICIDADE_2024">
+              <option value=""></option>
+              <option>ALTO</option><option>MODERADO</option><option>BAIXO</option><option>AUSÊNCIA DE RISCO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Criticidade 2023</label>
+            <select name="CRITICIDADE_2023">
+              <option value=""></option>
+              <option>ALTO</option><option>MODERADO</option><option>BAIXO</option><option>AUSÊNCIA DE RISCO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Criticidade 2022</label>
+            <select name="CRITICIDADE_2022">
+              <option value=""></option>
+              <option>ALTO</option><option>MODERADO</option><option>BAIXO</option><option>AUSÊNCIA DE RISCO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Criticidade 2021</label>
+            <select name="CRITICIDADE_2021">
+              <option value=""></option>
+              <option>ALTO</option><option>MODERADO</option><option>BAIXO</option><option>AUSÊNCIA DE RISCO</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <label>Observações</label>
+            <textarea name="OBSERVACOES" rows="3" placeholder="Observações sobre o posto…"></textarea>
+          </div>
+          <div class="form-group form-full">
+            <label>Condição para Unissex</label>
+            <textarea name="CONDICAO_UNISSEX" rows="2" placeholder="Descreva as condições necessárias para o posto ser Unissex…"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="reset" class="btn-secondary">Limpar</button>
+          <button type="submit" class="btn-primary" id="btn-submit-aet">Salvar Posto</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- FORM: Nova Ação PA -->
+    <div class="form-card" id="form-pa-new">
+      <div class="form-card-title">
+        <h3>Lançamento — Ação de Controle (PA)</h3>
+        <p class="form-subtitle">Preencha os dados da nova ação. Campos marcados com * são obrigatórios.</p>
+      </div>
+      <form onsubmit="Forms.submitPA(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Setor *</label>
+            <input type="text" name="SETOR" required list="dl-setor-pa" autocomplete="off">
+            <datalist id="dl-setor-pa"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Posto de Trabalho *</label>
+            <input type="text" name="POSTO_TRABALHO" required>
+          </div>
+          <div class="form-group">
+            <label>Criticidade *</label>
+            <select name="CRITICIDADE" required>
+              <option value="">Selecione…</option>
+              <option>ALTO</option><option>MODERADO</option><option>BAIXO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Classificação</label>
+            <select name="CLASSIFICACAO">
+              <option value="">Selecione…</option>
+              <option>Ação Normativa</option>
+              <option>Sugestão de Melhoria</option>
+              <option>Engenharia</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Gerente</label>
+            <input type="text" name="GERENTE" list="dl-gerente-pa" autocomplete="off">
+            <datalist id="dl-gerente-pa"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Responsável</label>
+            <input type="text" name="RESPONSAVEL">
+          </div>
+          <div class="form-group">
+            <label>Estimativa de Valor (R$)</label>
+            <input type="number" name="ESTIMATIVA_VALOR" step="0.01" min="0" placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label>Data Prevista</label>
+            <input type="date" name="DATA_PREVISTA">
+          </div>
+          <div class="form-group">
+            <label>Data de Conclusão</label>
+            <input type="date" name="DATA_CONCLUSAO">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select name="STATUS">
+              <option value="">Selecione…</option>
+              <option value="OK">OK (Concluído)</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <label>Ação de Controle *</label>
+            <textarea name="ACAO_CONTROLE" rows="4" required placeholder="Descreva a ação de controle ergonômico…"></textarea>
+          </div>
+          <div class="form-group form-full">
+            <label>Observações</label>
+            <textarea name="OBSERVACOES" rows="3" placeholder="Observações adicionais…"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Eficácia</label>
+            <input type="text" name="EFICACIA" placeholder="Ex: Satisfatória, Em análise…">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="reset" class="btn-secondary">Limpar</button>
+          <button type="submit" class="btn-primary" id="btn-submit-pa">Salvar Ação</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modal" onclick="Modal.closeOnOverlay(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">Editar Registro</h3>
+      <button class="modal-close" onclick="Modal.close()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== SETUP WARNING (when API not configured) ===== -->
+<div class="setup-banner" id="setup-banner">
+  <strong>⚙️ Configuração necessária:</strong>
+  Abra <code>app.js</code> e substitua <code>COLE_AQUI_A_URL_DO_APPS_SCRIPT</code> pela URL do seu Apps Script.
+  <button onclick="document.getElementById('setup-banner').style.display='none'">✕</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
