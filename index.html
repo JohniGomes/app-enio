@@ -91,6 +91,7 @@
     <section class="tab-content" id="tab-aet">
 
       <div class="filter-bar">
+        <select id="aet-filter-cliente" onchange="AET.onFilter()" class="admin-only"><option value="">Todos os Clientes</option></select>
         <select id="aet-filter-setor" onchange="AET.onFilter()"><option value="">Todos os Setores</option></select>
         <select id="aet-filter-criticidade" onchange="AET.onFilter()">
           <option value="">Todas as Criticidades</option>
@@ -104,10 +105,10 @@
         </select>
         <select id="aet-filter-mes" onchange="AET.onFilter()">
           <option value="">Todos os Meses</option>
-          <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
-          <option>Abril</option><option>Maio</option><option>Junho</option>
-          <option>Julho</option><option>Agosto</option><option>Setembro</option>
-          <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+          <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+          <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+          <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+          <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
         </select>
         <select id="aet-filter-ano" onchange="AET.onFilter()"><option value="">Todos os Anos</option></select>
         <select id="aet-filter-gerente" onchange="AET.onFilter()"><option value="">Todos os Gerentes</option></select>
@@ -191,6 +192,7 @@
     <section class="tab-content" id="tab-pa">
 
       <div class="filter-bar">
+        <select id="pa-filter-cliente" onchange="PA.onFilter()" class="admin-only"><option value="">Todos os Clientes</option></select>
         <select id="pa-filter-setor" onchange="PA.onFilter()"><option value="">Todos os Setores</option></select>
         <select id="pa-filter-criticidade" onchange="PA.onFilter()">
           <option value="">Todas as Criticidades</option>
@@ -303,13 +305,14 @@
     <section class="tab-content" id="tab-fisio">
 
       <div class="filter-bar">
+        <select id="fisio-filter-cliente" onchange="FISIO.onFilter()" class="admin-only"><option value="">Todos os Clientes</option></select>
         <select id="fisio-filter-setor"   onchange="FISIO.onFilter()"><option value="">Todos os Setores</option></select>
         <select id="fisio-filter-mes"     onchange="FISIO.onFilter()">
           <option value="">Todos os Meses</option>
-          <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
-          <option>Abril</option><option>Maio</option><option>Junho</option>
-          <option>Julho</option><option>Agosto</option><option>Setembro</option>
-          <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+          <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+          <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+          <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+          <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
         </select>
         <select id="fisio-filter-ano"     onchange="FISIO.onFilter()"><option value="">Todos os Anos</option></select>
         <select id="fisio-filter-parecer" onchange="FISIO.onFilter()">

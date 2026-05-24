@@ -529,7 +529,15 @@ const Charts = {
 //  AET MODULE
 // ================================================================
 const AET = {
-  f: { setor: '', criticidade: '', genero: '', mes: '', ano: '', gerente: '', q: '' },
+  f: { cliente: '', setor: '', criticidade: '', genero: '', mes: '', ano: '', gerente: '', q: '' },
+
+  // Extrai mês (string '1'-'12') e ano (string '2024') da data ATUALIZACAO
+  _mesAno(r) {
+    if (!r.ATUALIZACAO) return { mes: '', ano: '' };
+    const dt = new Date(String(r.ATUALIZACAO) + 'T00:00:00');
+    if (isNaN(dt)) return { mes: '', ano: '' };
+    return { mes: String(dt.getMonth() + 1), ano: String(dt.getFullYear()) };
+  },
 
   load(data) {
     // Filtra por cliente se for usuário cliente
@@ -539,11 +547,16 @@ const AET = {
 
     Utils.fillSelect('aet-filter-setor',   Utils.unique(State.aet, 'SETOR'));
     Utils.fillSelect('aet-filter-gerente', Utils.unique(State.aet, 'GERENTE'));
-    Utils.fillSelect('aet-filter-ano',     Utils.unique(State.aet, 'ANO').map(String));
+    // Ano derivado de ATUALIZACAO
+    const anos = [...new Set(State.aet.map(r => this._mesAno(r).ano).filter(Boolean))].sort();
+    Utils.fillSelect('aet-filter-ano', anos);
+    // Cliente (só admin vê)
+    if (Auth.isAdmin()) Utils.fillSelect('aet-filter-cliente', Utils.unique(State.aet, 'CLIENTE'));
     this.apply();
   },
 
   onFilter() {
+    this.f.cliente     = (document.getElementById('aet-filter-cliente') || {}).value || '';
     this.f.setor       = document.getElementById('aet-filter-setor').value;
     this.f.criticidade = document.getElementById('aet-filter-criticidade').value;
     this.f.genero      = document.getElementById('aet-filter-genero').value;
@@ -556,8 +569,8 @@ const AET = {
   search(q) { this.f.q = q; this.apply(); },
 
   clearFilters() {
-    this.f = { setor: '', criticidade: '', genero: '', mes: '', ano: '', gerente: '', q: '' };
-    ['aet-filter-setor','aet-filter-criticidade','aet-filter-genero',
+    this.f = { cliente: '', setor: '', criticidade: '', genero: '', mes: '', ano: '', gerente: '', q: '' };
+    ['aet-filter-cliente','aet-filter-setor','aet-filter-criticidade','aet-filter-genero',
      'aet-filter-mes','aet-filter-ano','aet-filter-gerente']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const s = document.getElementById('aet-search'); if (s) s.value = '';
@@ -567,11 +580,12 @@ const AET = {
   apply() {
     let d = [...State.aet];
     const f = this.f;
+    if (f.cliente)     d = d.filter(r => (r.CLIENTE || '') === f.cliente);
     if (f.setor)       d = d.filter(r => r.SETOR === f.setor);
     if (f.criticidade) d = d.filter(r => (r.CRITICIDADE_ATUAL || '').toUpperCase() === f.criticidade.toUpperCase());
     if (f.genero)      d = d.filter(r => r.POSTO_GENERO === f.genero);
-    if (f.mes)         d = d.filter(r => (r.MES || '') === f.mes);
-    if (f.ano)         d = d.filter(r => String(r.ANO || '') === f.ano);
+    if (f.mes)         d = d.filter(r => this._mesAno(r).mes === f.mes);
+    if (f.ano)         d = d.filter(r => this._mesAno(r).ano === f.ano);
     if (f.gerente)     d = d.filter(r => r.GERENTE === f.gerente);
     if (f.q) {
       const q = f.q.toLowerCase();
@@ -675,7 +689,7 @@ const AET = {
 //  PA MODULE
 // ================================================================
 const PA = {
-  f: { setor: '', criticidade: '', status: '', gerente: '', q: '' },
+  f: { cliente: '', setor: '', criticidade: '', status: '', gerente: '', q: '' },
 
   getSem(r) { return Utils.semaforo(r); },
 
@@ -686,10 +700,12 @@ const PA = {
     State.pa = raw.map(r => ({ ...r, _sem: this.getSem(r) }));
     Utils.fillSelect('pa-filter-setor',   Utils.unique(State.pa, 'SETOR'));
     Utils.fillSelect('pa-filter-gerente', Utils.unique(State.pa, 'GERENTE'));
+    if (Auth.isAdmin()) Utils.fillSelect('pa-filter-cliente', Utils.unique(State.pa, 'CLIENTE'));
     this.apply();
   },
 
   onFilter() {
+    this.f.cliente     = (document.getElementById('pa-filter-cliente') || {}).value || '';
     this.f.setor       = document.getElementById('pa-filter-setor').value;
     this.f.criticidade = document.getElementById('pa-filter-criticidade').value;
     this.f.status      = document.getElementById('pa-filter-status').value;
@@ -700,8 +716,8 @@ const PA = {
   search(q) { this.f.q = q; this.apply(); },
 
   clearFilters() {
-    this.f = { setor: '', criticidade: '', status: '', gerente: '', q: '' };
-    ['pa-filter-setor','pa-filter-criticidade','pa-filter-status','pa-filter-gerente']
+    this.f = { cliente: '', setor: '', criticidade: '', status: '', gerente: '', q: '' };
+    ['pa-filter-cliente','pa-filter-setor','pa-filter-criticidade','pa-filter-status','pa-filter-gerente']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const s = document.getElementById('pa-search'); if (s) s.value = '';
     this.apply();
@@ -710,6 +726,7 @@ const PA = {
   apply() {
     let d = [...State.pa];
     const f = this.f;
+    if (f.cliente)     d = d.filter(r => (r.CLIENTE || '') === f.cliente);
     if (f.setor)       d = d.filter(r => r.SETOR === f.setor);
     if (f.criticidade) d = d.filter(r => (r.CRITICIDADE || '').toUpperCase() === f.criticidade.toUpperCase());
     if (f.status)      d = d.filter(r => r._sem.label === f.status.toUpperCase());
@@ -1106,7 +1123,7 @@ function calcFaixaEtaria(idade) {
 }
 
 const FISIO = {
-  f: { setor: '', mes: '', ano: '', parecer: '', genero: '', q: '' },
+  f: { cliente: '', setor: '', mes: '', ano: '', parecer: '', genero: '', q: '' },
 
   load(data) {
     State.fisio = Auth.isClient()
@@ -1114,10 +1131,12 @@ const FISIO = {
       : data;
     Utils.fillSelect('fisio-filter-setor', Utils.unique(State.fisio, 'SETOR'));
     Utils.fillSelect('fisio-filter-ano',   Utils.unique(State.fisio, 'ANO').map(String));
+    if (Auth.isAdmin()) Utils.fillSelect('fisio-filter-cliente', Utils.unique(State.fisio, 'CLIENTE'));
     this.apply();
   },
 
   onFilter() {
+    this.f.cliente = (document.getElementById('fisio-filter-cliente') || {}).value || '';
     this.f.setor   = document.getElementById('fisio-filter-setor').value;
     this.f.mes     = document.getElementById('fisio-filter-mes').value;
     this.f.ano     = document.getElementById('fisio-filter-ano').value;
@@ -1129,8 +1148,8 @@ const FISIO = {
   search(q) { this.f.q = q; this.apply(); },
 
   clearFilters() {
-    this.f = { setor: '', mes: '', ano: '', parecer: '', genero: '', q: '' };
-    ['fisio-filter-setor','fisio-filter-mes','fisio-filter-ano',
+    this.f = { cliente: '', setor: '', mes: '', ano: '', parecer: '', genero: '', q: '' };
+    ['fisio-filter-cliente','fisio-filter-setor','fisio-filter-mes','fisio-filter-ano',
      'fisio-filter-parecer','fisio-filter-genero']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const s = document.getElementById('fisio-search'); if (s) s.value = '';
@@ -1140,8 +1159,10 @@ const FISIO = {
   apply() {
     let d = [...State.fisio];
     const f = this.f;
+    if (f.cliente) d = d.filter(r => (r.CLIENTE || '') === f.cliente);
     if (f.setor)   d = d.filter(r => r.SETOR === f.setor);
-    if (f.mes)     d = d.filter(r => (r.MES || '') === f.mes);
+    // MES armazenado como número (1-12); comparar como string
+    if (f.mes)     d = d.filter(r => String(r.MES || '') === f.mes);
     if (f.ano)     d = d.filter(r => String(r.ANO || '') === f.ano);
     if (f.parecer) d = d.filter(r => (r.PARECER || '') === f.parecer);
     if (f.genero)  d = d.filter(r => (r.GENERO || '') === f.genero);
