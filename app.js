@@ -143,6 +143,16 @@ const Auth = {
       el.style.display = this.isAdmin() ? '' : 'none';
     });
 
+    // Para admin: sincroniza lista de clientes da API para os dropdowns dos formulários
+    if (this.isAdmin()) {
+      API.readClients().then(clients => {
+        clients.filter(c => c.CLIENTE && c.TIPO !== 'admin')
+               .forEach(c => Options.add('CLIENTE', c.CLIENTE));
+        ['f-aet-CLIENTE','f-pa-CLIENTE','f-fisio-CLIENTE']
+          .forEach(id => Options.populate(id, 'CLIENTE'));
+      }).catch(() => {});
+    }
+
     // Para usuário cliente: pré-preenche e trava o campo CLIENTE nos formulários
     if (this.isClient() && s.cliente) {
       ['f-aet-CLIENTE','f-pa-CLIENTE','f-fisio-CLIENTE'].forEach(id => {
@@ -1501,8 +1511,8 @@ const ClientMgr = {
       // Adiciona às opções locais e atualiza os selects nos formulários
       if (cliente) {
         Options.add('CLIENTE', cliente);
-        Options.populate('f-aet-CLIENTE', 'CLIENTE');
-        Options.populate('f-pa-CLIENTE',  'CLIENTE');
+        ['f-aet-CLIENTE','f-pa-CLIENTE','f-fisio-CLIENTE']
+          .forEach(id => Options.populate(id, 'CLIENTE'));
       }
       Utils.toast(`Cliente "${nome}" cadastrado!`, 'success');
       await this.render();
