@@ -676,7 +676,7 @@ const AET = {
     const isAdmin = Auth.isAdmin();
     document.getElementById('aet-count').textContent = `${d.length} registro${d.length !== 1 ? 's' : ''}`;
     if (!d.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="table-loading">Nenhum registro encontrado.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="table-loading">Nenhum registro encontrado.</td></tr>';
       return;
     }
     tbody.innerHTML = d.map(r => `
@@ -688,6 +688,8 @@ const AET = {
         <td>${Utils.critBadge(r.CRITICIDADE_ATUAL)}</td>
         <td>${Utils.esc(r.POSTO_GENERO) || '—'}</td>
         <td>${Utils.esc(r.GERENTE) || '—'}</td>
+        <td title="${Utils.esc(r.OBSERVACOES)}">${Utils.esc(Utils.truncate(r.OBSERVACOES, 60)) || '—'}</td>
+        <td title="${Utils.esc(r.CONDICAO_UNISSEX)}">${Utils.esc(Utils.truncate(r.CONDICAO_UNISSEX, 60)) || '—'}</td>
         ${isAdmin ? `
         <td>
           <div class="action-group">
