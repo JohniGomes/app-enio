@@ -196,6 +196,33 @@ function setupSheets() {
 }
 
 // ================================================================
+//  MANUTENÇÃO — Execute UMA VEZ para adicionar coluna CLIENTE
+//  em BD_AET e BD_PA caso ainda não exista.
+// ================================================================
+function addClienteColumn() {
+  const targets = ['BD_AET', 'BD_PA'];
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  targets.forEach(name => {
+    const sheet   = ss.getSheetByName(name);
+    if (!sheet) { Logger.log(name + ' não encontrada.'); return; }
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (headers.includes('CLIENTE')) {
+      Logger.log(name + ': coluna CLIENTE já existe — pulando.');
+      return;
+    }
+
+    const col = sheet.getLastColumn() + 1;
+    sheet.getRange(1, col).setValue('CLIENTE');
+    sheet.getRange(1, col).setFontWeight('bold');
+    Logger.log(name + ': coluna CLIENTE adicionada na coluna ' + col + '.');
+  });
+
+  Logger.log('Concluído!');
+}
+
+// ================================================================
 //  HELPERS
 // ================================================================
 function getSheet(name) {
