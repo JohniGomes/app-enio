@@ -143,6 +143,22 @@ const Auth = {
       el.style.display = this.isAdmin() ? '' : 'none';
     });
 
+    // Para usuário cliente: pré-preenche e trava o campo CLIENTE nos formulários
+    if (this.isClient() && s.cliente) {
+      ['f-aet-CLIENTE','f-pa-CLIENTE','f-fisio-CLIENTE'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        // Garante que a opção existe e está selecionada
+        if (![...el.options].some(o => o.value === s.cliente)) {
+          const o = document.createElement('option');
+          o.value = o.textContent = s.cliente;
+          el.appendChild(o);
+        }
+        el.value    = s.cliente;
+        el.disabled = true;
+      });
+    }
+
     // Navegar para aba inicial conforme perfil
     const startTab = this.isAdmin() ? 'lancamentos' : 'aet';
     const startBtn = document.querySelector(`[data-tab="${startTab}"]`);
@@ -1331,6 +1347,7 @@ const Forms = {
     e.preventDefault();
     const btn  = document.getElementById('btn-submit-aet');
     const data = Object.fromEntries(new FormData(e.target).entries());
+    if (Auth.isClient() && State.session.cliente) data.CLIENTE = State.session.cliente;
     btn.disabled = true; btn.textContent = 'Salvando…';
     try {
       await API.create(CONFIG.SHEETS.AET, data);
@@ -1359,6 +1376,7 @@ const Forms = {
     e.preventDefault();
     const btn  = document.getElementById('btn-submit-fisio');
     const data = Object.fromEntries(new FormData(e.target).entries());
+    if (Auth.isClient() && State.session.cliente) data.CLIENTE = State.session.cliente;
     // Garante faixa etária calculada
     if (data.IDADE && !data.FAIXA_ETARIA) {
       data.FAIXA_ETARIA = calcFaixaEtaria(data.IDADE);
@@ -1381,6 +1399,7 @@ const Forms = {
     e.preventDefault();
     const btn  = document.getElementById('btn-submit-pa');
     const data = Object.fromEntries(new FormData(e.target).entries());
+    if (Auth.isClient() && State.session.cliente) data.CLIENTE = State.session.cliente;
     btn.disabled = true; btn.textContent = 'Salvando…';
     try {
       await API.create(CONFIG.SHEETS.PA, data);
