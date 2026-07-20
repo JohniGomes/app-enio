@@ -1135,6 +1135,102 @@ const Modal = {
     } catch (e) {
       Utils.toast('Erro ao salvar: ' + e.message, 'error');
     }
+  },
+
+  openFISIO(rowNum) {
+    const r = State.fisio.find(x => x._row === rowNum);
+    if (!r) return;
+    State.editTarget = { sheet: 'FISIO', rowNum, orig: r };
+
+    const clienteOpts = ['', ...Options.get('CLIENTE')]
+      .map(c => `<option value="${c}"${c === (r.CLIENTE||'') ? ' selected' : ''}>${c || 'Selecione…'}</option>`).join('');
+    const generoOpts = ['','Masculino','Feminino']
+      .map(v => `<option value="${v}"${v === (r.GENERO||'') ? ' selected' : ''}>${v || 'Selecione…'}</option>`).join('');
+    const parecerOpts = ['','Aprovado','Aprovado com Restrição','Reprovado']
+      .map(v => `<option value="${v}"${v === (r.PARECER||'') ? ' selected' : ''}>${v || 'Selecione…'}</option>`).join('');
+    const mesOpts = ['', ...MES_NOMES]
+      .map(v => `<option value="${v}"${v === (r._mesNome||'') ? ' selected' : ''}>${v || 'Selecione…'}</option>`).join('');
+
+    this.open('Editar Admissional Fisioterapia', `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cliente</label>
+          <select id="me-CLIENTE">${clienteOpts}</select>
+        </div>
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="me-NOME" value="${Utils.esc(r.NOME)}">
+        </div>
+        <div class="form-group">
+          <label>Setor</label>
+          <input type="text" id="me-SETOR" value="${Utils.esc(r.SETOR)}">
+        </div>
+        <div class="form-group">
+          <label>Data do Exame</label>
+          <input type="date" id="me-DATA_EXAME" value="${Utils.dateValue(r.DATA_EXAME)}">
+        </div>
+        <div class="form-group">
+          <label>Mês</label>
+          <select id="me-MES">${mesOpts}</select>
+        </div>
+        <div class="form-group">
+          <label>Ano</label>
+          <input type="number" id="me-ANO" value="${Utils.esc(r.ANO)}" min="2000" max="2100">
+        </div>
+        <div class="form-group">
+          <label>Gênero</label>
+          <select id="me-GENERO">${generoOpts}</select>
+        </div>
+        <div class="form-group">
+          <label>Idade</label>
+          <input type="number" id="me-IDADE" value="${Utils.esc(r.IDADE)}" min="0" max="120">
+        </div>
+        <div class="form-group">
+          <label>Faixa Etária</label>
+          <input type="text" id="me-FAIXA_ETARIA" value="${Utils.esc(r.FAIXA_ETARIA)}">
+        </div>
+        <div class="form-group">
+          <label>Parecer</label>
+          <select id="me-PARECER">${parecerOpts}</select>
+        </div>
+        <div class="form-group form-full">
+          <label>Observações</label>
+          <textarea id="me-OBSERVACOES" rows="3">${Utils.esc(r.OBSERVACOES)}</textarea>
+        </div>
+        <div class="form-actions form-full">
+          <button type="button" class="btn-secondary" onclick="Modal.close()">Cancelar</button>
+          <button type="button" class="btn-primary" onclick="Modal.saveFISIO()">Salvar</button>
+        </div>
+      </div>`);
+  },
+
+  async saveFISIO() {
+    const get = id => (document.getElementById('me-' + id) || {}).value || '';
+    const mes = get('MES');
+    const mesNum = mes ? String(MES_NOMES.indexOf(mes) + 1) : '';
+    const data = {
+      ...State.editTarget.orig,
+      CLIENTE:     get('CLIENTE'),
+      NOME:        get('NOME'),
+      SETOR:       get('SETOR'),
+      DATA_EXAME:  get('DATA_EXAME'),
+      MES:         mesNum,
+      ANO:         get('ANO'),
+      GENERO:      get('GENERO'),
+      IDADE:       get('IDADE'),
+      FAIXA_ETARIA:get('FAIXA_ETARIA'),
+      PARECER:     get('PARECER'),
+      OBSERVACOES: get('OBSERVACOES')
+    };
+    if (!data.NOME) { Utils.toast('Informe o nome.', 'error'); return; }
+    try {
+      await API.update(CONFIG.SHEETS.FISIO, State.editTarget.rowNum, data);
+      Utils.toast('Admissional atualizado!', 'success');
+      this.close();
+      await App.loadFisio();
+    } catch (e) {
+      Utils.toast('Erro ao salvar: ' + e.message, 'error');
+    }
   }
 };
 
@@ -1334,6 +1430,7 @@ const FISIO = {
         ${isAdmin ? `
         <td>
           <div class="action-group">
+            <button class="btn-action btn-edit" onclick="Modal.openFISIO(${r._row})">Editar</button>
             <button class="btn-action btn-delete" onclick="FISIO.confirmDelete(${r._row})">Excluir</button>
           </div>
         </td>` : ''}
