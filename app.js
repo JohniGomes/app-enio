@@ -1308,7 +1308,7 @@ const FISIO = {
     const isAdmin = Auth.isAdmin();
     document.getElementById('fisio-count').textContent = `${d.length} registro${d.length !== 1 ? 's' : ''}`;
     if (!d.length) {
-      tbody.innerHTML = '<tr><td colspan="10" class="table-loading">Nenhum registro encontrado.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="table-loading">Nenhum registro encontrado.</td></tr>';
       return;
     }
     const parecerBadge = p => {
@@ -1330,6 +1330,7 @@ const FISIO = {
         <td>${Utils.esc(r.IDADE) || '—'}</td>
         <td>${Utils.esc(r.FAIXA_ETARIA) || '—'}</td>
         <td>${parecerBadge(r.PARECER)}</td>
+        <td title="${Utils.esc(r.OBSERVACOES)}">${Utils.esc(Utils.truncate(r.OBSERVACOES, 60)) || '—'}</td>
         ${isAdmin ? `
         <td>
           <div class="action-group">
